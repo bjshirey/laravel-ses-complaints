@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
+// Sadly, we do not have this in versions of Laravel older than version 7.
+// use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
 use Oza75\LaravelSesComplaints\Contracts\CheckMiddleware;
 use Oza75\LaravelSesComplaints\Events\BounceNotificationCreated;
 use Oza75\LaravelSesComplaints\Events\ComplaintNotificationCreated;
@@ -69,9 +71,10 @@ class LaravelSesComplaints implements Contract
 
         $subscription = $model->query()->create($attributes);
 
-        $response = Http::get($subscription->getAttribute('subscribe_url'));
+        $client = new Client();
+        $response = $client->get($subscription->getAttribute('subscribe_url'));
 
-        if ($response->failed()) {
+        if ($response->getStatusCode() !== 200) {
             $subscription->delete();
 
             throw new CannotConfirmSubscriptionException("Cannot confirm subscription request");
