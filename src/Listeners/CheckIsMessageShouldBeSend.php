@@ -14,6 +14,8 @@ class CheckIsMessageShouldBeSend
     /** @var Contract $repository */
     protected $repository;
 
+    protected $pipeline;
+
     /**
      * CheckIsMessageShouldBeSend constructor.
      * @param Contract $repository
@@ -21,6 +23,7 @@ class CheckIsMessageShouldBeSend
     public function __construct(Contract $repository)
     {
         $this->repository = $repository;
+        
     }
 
     /**

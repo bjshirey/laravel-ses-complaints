@@ -30,21 +30,6 @@ class LaravelSesComplaintsServiceProvider extends ServiceProvider
                 __DIR__ . '/../config/config.php' => config_path('laravel-ses-complaints.php'),
             ], 'config');
 
-            // Publishing the views.
-            /*$this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-ses-complaints'),
-            ], 'views');*/
-
-            // Publishing assets.
-            /*$this->publishes([
-                __DIR__.'/../resources/assets' => public_path('vendor/laravel-ses-complaints'),
-            ], 'assets');*/
-
-            // Publishing the translation files.
-            /*$this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/laravel-ses-complaints'),
-            ], 'lang');*/
-
             // Registering package commands.
             $this->commands([
                 SubscribeUrlCommand::class,

@@ -14,7 +14,7 @@ class CreateSesNotificationsTable extends Migration
     public function up()
     {
         Schema::create('ses_notifications', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->text('topic_arn');
             $table->string('source_email');
             $table->string('destination_email');

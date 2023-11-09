@@ -5,13 +5,14 @@ namespace Oza75\LaravelSesComplaints\Middlewares;
 
 
 use Closure;
+use Illuminate\Support\Facades\Log;
 use Oza75\LaravelSesComplaints\Contracts\CheckMiddleware;
 use Oza75\LaravelSesComplaints\Contracts\LaravelSesComplaints as Repository;
-use Symfony\Component\Mime\Email;
+use Swift_Message;
 
 class BounceCheckMiddleware implements CheckMiddleware
 {
-    private Repository $repository;
+    private $repository;
 
     /**
      * ComplaintCheckMiddleware constructor.
@@ -23,13 +24,12 @@ class BounceCheckMiddleware implements CheckMiddleware
     }
 
     /**
-     * @param Email   $message
+     * @param Swift_Message $message
      * @param Closure $next
-     * @param array   $options
-     *
+     * @param array $options
      * @return mixed|bool
      */
-    public function handle(Email $message, Closure $next, array $options = [])
+    public function handle(Swift_Message $message, Closure $next, array $options = [])
     {
         $recipients = $this->shouldSendTo($message, $options);
 
@@ -37,27 +37,26 @@ class BounceCheckMiddleware implements CheckMiddleware
             return false;
         }
 
-        $message->to(...$recipients);
+        $message->setTo($recipients);
 
         return $next($message);
     }
 
     /**
-     * @param Email $message
+     * @param Swift_Message $message
      * @param array $options
-     *
      * @return array
      */
-    protected function shouldSendTo(Email $message, array $options): array
+    protected function shouldSendTo(Swift_Message $message, array $options): array
     {
-        $emails = collect($message->getTo())->map(fn ($to) => $to->getAddress())->all();
+        $emails = array_keys($message->getTo());
+
         $model = $this->repository->notificationModel();
 
-        $query = $model->newQuery()
-            ->selectRaw('destination_email, count(id) as n_entry')
+        $query = $model::selectRaw('destination_email, count(id) as n_entry')
             ->where('type', 'bounce')
             ->whereIn('destination_email', $emails);
-
+       
         if ($options['check_by_subject'] ?? false) {
             $query->where('subject', $message->getSubject());
         }
@@ -67,8 +66,10 @@ class BounceCheckMiddleware implements CheckMiddleware
             ->toBase()
             ->pluck('n_entry', 'destination_email');
 
-        return collect($message->getTo())->filter(function ($to) use ($options, &$entries) {
-            return (int)($entries[$to->getAddress()] ?? 0) < (int)($options['max_entries'] ?? 1);
+        $sendto = collect($message->getTo())->filter(function ($name, $email) use ($options, &$entries) {
+            return (int)($entries[$email] ?? 0) <= (int)($options['max_entries'] ?? 1);
         })->toArray();
+
+        return  $sendto;
     }
 }

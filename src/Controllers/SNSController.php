@@ -36,14 +36,14 @@ class SNSController extends Controller
      * @param LaravelSesComplaints $repository
      * @return Response
      */
-    public function bounces(BounceRequest $request, LaravelSesComplaints $repository): Response
+    public function bounces(BounceRequest $request, LaravelSesComplaints $repository)
     {
         $content = json_decode($request->getContent(), true);
 
         if (($content['Type'] ?? null) === 'SubscriptionConfirmation') {
             return app()->call([$this, 'registerSubscription']);
         }
-
+        
         $attributes = $request->notificationData();
         $recipients = collect($request->bouncedRecipients())->filter(function ($recipient) {
             return $recipient['action'] === 'failed';

@@ -15,7 +15,7 @@ class CreateSnsSubscriptionsTable extends Migration
     public function up()
     {
         Schema::create('sns_subscriptions', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->text('token');
             $table->text('topic_arn');
             $table->text('subscribe_url');
