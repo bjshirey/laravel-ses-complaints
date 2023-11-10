@@ -17,7 +17,7 @@ class LaravelSesComplaintsServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadFactoriesFrom(__DIR__ . '/../database/factories');
+        app()->make(EloquentFactory::class)->load(__DIR__.'/database/factories');
         $this->loadRoutesFrom(__DIR__ . '/routes.php');
 
         if ($this->app->runningInConsole()) {
