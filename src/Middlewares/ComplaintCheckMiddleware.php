@@ -5,7 +5,8 @@ namespace Oza75\LaravelSesComplaints\Middlewares;
 use Closure;
 use Oza75\LaravelSesComplaints\Contracts\CheckMiddleware;
 use Oza75\LaravelSesComplaints\Contracts\LaravelSesComplaints as Repository;
-use Swift_Message;
+// use Symfony\Component\Mime\Email;
+use Swift_Message as Email;
 
 class ComplaintCheckMiddleware implements CheckMiddleware
 {
@@ -21,12 +22,12 @@ class ComplaintCheckMiddleware implements CheckMiddleware
     }
 
     /**
-     * @param Swift_Message $message
+     * @param Email $message
      * @param Closure $next
      * @param array $options
      * @return mixed|bool
      */
-    public function handle(Swift_Message $message, Closure $next, array $options = [])
+    public function handle(Email $message, Closure $next, array $options = [])
     {
         $recipients = $this->shouldSendTo($message, $options);
 
@@ -40,11 +41,11 @@ class ComplaintCheckMiddleware implements CheckMiddleware
     }
 
     /**
-     * @param Swift_Message $message
+     * @param Email $message
      * @param array $options
      * @return array
      */
-    protected function shouldSendTo(Swift_Message $message, array $options): array
+    protected function shouldSendTo(Email $message, array $options): array
     {
         $emails = array_keys($message->getTo());
 
@@ -54,7 +55,7 @@ class ComplaintCheckMiddleware implements CheckMiddleware
             ->selectRaw('destination_email, count(id) as n_entry')
             ->where('type', 'complaint')
             ->whereIn('destination_email', $emails);
-        
+            
         if ($options['check_by_subject'] ?? false) {
             $query->where('subject', $message->getSubject());
         }

@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Oza75\LaravelSesComplaints\Commands\SubscribeUrlCommand;
 use Oza75\LaravelSesComplaints\Contracts\LaravelSesComplaints as Contract;
 use Oza75\LaravelSesComplaints\Listeners\CheckIsMessageShouldBeSend;
+use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 
 class LaravelSesComplaintsServiceProvider extends ServiceProvider
 {
@@ -16,13 +17,7 @@ class LaravelSesComplaintsServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        /*
-         * Optional methods to load your package assets
-         */
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'laravel-ses-complaints');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-ses-complaints');
-
-//        $this->loadMigrationsFrom(realpath(__DIR__ . '/../database/migrations'));
+        $this->loadFactoriesFrom(__DIR__ . '/../database/factories');
         $this->loadRoutesFrom(__DIR__ . '/routes.php');
 
         if ($this->app->runningInConsole()) {

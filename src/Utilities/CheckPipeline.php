@@ -21,7 +21,7 @@ class CheckPipeline extends Pipeline
                 } elseif (is_array($pipe)) {
                     // Added 2023-10-05 b/c our pipe is an array (maybe Laravel 5.4 thing???).
                     $name = $pipe['middleware'];
-                    $parameters = array_values($pipe['options'] ?? []);
+                    $parameters = $pipe['options'] ?? [];
                     $pipe = $this->getContainer()->make($name);
 
                 } elseif (!is_object($pipe)) {

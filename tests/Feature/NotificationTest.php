@@ -3,13 +3,13 @@
 
 namespace Oza75\LaravelSesComplaints\Tests\Feature;
 
-
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Event;
 use Oza75\LaravelSesComplaints\Database\Factories\NotificationFactory;
 use Oza75\LaravelSesComplaints\Middlewares\BounceCheckMiddleware;
 use Oza75\LaravelSesComplaints\Middlewares\ComplaintCheckMiddleware;
+use Oza75\LaravelSesComplaints\Models\Notification;
 use Oza75\LaravelSesComplaints\Tests\TestCase;
 use Oza75\LaravelSesComplaints\Tests\TestSupport\Models\TestUser;
 use Oza75\LaravelSesComplaints\Tests\TestSupport\Notifications\TestNotification;
@@ -23,17 +23,25 @@ class NotificationTest extends TestCase
         $this->assertTrue(true);
     }
 
+    protected function createTestUser($attributes = []) {
+        return factory(TestUser::class)->create($attributes);
+    }
+
+    protected function createNotification($attributes = []) {
+        return factory(Notification::class)->create($attributes);
+    }
+
     public function test_can_send_email_to_users_which_has_not_complained()
     {
         Event::fake([MessageSent::class]);
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
+        $user = $this->createTestUser();
 
         $user->notify(new TestNotification());
 
         Event::assertDispatched(MessageSent::class, function (MessageSent $event) use ($user) {
-            return in_array($user->email, collect($event->message->getTo())->map(fn($to) => $to->getAddress())->all());
+            return in_array($user->email, array_keys($event->message->getTo()));
         });
     }
 
@@ -52,8 +60,11 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
+        $user = $this->createTestUser();
+
+        $notificationData = ['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'];
+
+        $notification = $this->createNotification($notificationData);
 
         $user->notify(new TestNotification());
 
@@ -69,18 +80,20 @@ class NotificationTest extends TestCase
             if ($key === ComplaintCheckMiddleware::class) {
                 $options = array_merge($options, ['check_by_subject' => true]);
             }
+           
             return $options;
         });
 
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+
+        $n1 = $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
+        $n2 = $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -102,14 +115,14 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -131,14 +144,14 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'complaint', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -160,10 +173,10 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -185,12 +198,12 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -212,14 +225,14 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -241,14 +254,14 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
@@ -273,14 +286,14 @@ class NotificationTest extends TestCase
         config()->set('laravel-ses-complaints.middlewares', $middlewares->toArray());
 
         /** @var TestUser $user */
-        $user = TestUser::factory()->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello'])->create();
+        $user = $this->createTestUser();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Hello']);
 
         $user->notify(new TestNotification());
 
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
-        (new NotificationFactory())->state(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification'])->create();
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
+        $this->createNotification(['destination_email' => $user->email, 'type' => 'bounce', 'subject' => 'Test Notification']);
 
         $user->notify(new TestNotification());
 
