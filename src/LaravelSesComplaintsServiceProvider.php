@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Oza75\LaravelSesComplaints\Commands\SubscribeUrlCommand;
 use Oza75\LaravelSesComplaints\Contracts\LaravelSesComplaints as Contract;
 use Oza75\LaravelSesComplaints\Listeners\CheckIsMessageShouldBeSend;
+// 2023-11-13; This line isn't working. Needed for testing, but we can figure out a solution later.
 use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 
 class LaravelSesComplaintsServiceProvider extends ServiceProvider
@@ -17,7 +18,8 @@ class LaravelSesComplaintsServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        app()->make(EloquentFactory::class)->load(__DIR__.'/database/factories');
+        // 2023-11-13; This line isn't working. Needed for testing, but we can figure out a solution later.
+        //app()->make(EloquentFactory::class)->load(__DIR__.'/database/factories');
         $this->loadRoutesFrom(__DIR__ . '/routes.php');
 
         if ($this->app->runningInConsole()) {
