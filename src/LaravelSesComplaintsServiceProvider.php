@@ -9,7 +9,7 @@ use Oza75\LaravelSesComplaints\Commands\SubscribeUrlCommand;
 use Oza75\LaravelSesComplaints\Contracts\LaravelSesComplaints as Contract;
 use Oza75\LaravelSesComplaints\Listeners\CheckIsMessageShouldBeSend;
 // 2023-11-13; This line isn't working. Needed for testing, but we can figure out a solution later.
-use Illuminate\Database\Eloquent\Factory as EloquentFactory;
+//use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 
 class LaravelSesComplaintsServiceProvider extends ServiceProvider
 {
